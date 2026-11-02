@@ -94,6 +94,8 @@
   v7.0 changes: New Selected Work card images — DealBoard (two screens on DealBoard navy, lime accent),
                 Noah Hand (walnut kitchen with small crest), Logic Raw (logo above the clouds).
   v7.1 changes: DealBoard project background deepened to dark royal blue #070b3b.
+  v7.2 changes: Image-hover cursor no longer inverts colours — the circle turns the image under it black
+                and white, with a thin white ring and "View" in white.
   Based on: v3.6 "Riviera Reveal" (content, case studies, lightbox, Riviera Nights Ultralight font).
 -->
 <!doctype html>
@@ -171,8 +173,9 @@
   .cursor { position: fixed; left: 0; top: 0; z-index: 95; pointer-events: none; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #fff; mix-blend-mode: difference; transition: width .45s var(--ease), height .45s var(--ease), margin .45s var(--ease), background .3s; display: none; }
   .cursor span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #000; opacity: 0; transition: opacity .3s; -webkit-text-stroke: .4px #000; }
   .cursor.link { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
-  .cursor.view { width: 96px; height: 96px; margin: -48px 0 0 -48px; }
-  .cursor.view span { opacity: 1; }
+  .cursor.view { width: 104px; height: 104px; margin: -52px 0 0 -52px; mix-blend-mode: normal; background: rgba(255,255,255,.04);
+    -webkit-backdrop-filter: grayscale(1) contrast(1.08); backdrop-filter: grayscale(1) contrast(1.08); box-shadow: 0 0 0 1px rgba(255,255,255,.75); }
+  .cursor.view span { opacity: 1; color: #fff; -webkit-text-stroke: .4px #fff; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
   @media (hover: hover) and (pointer: fine) { .cursor { display: block; } }
 
   /* Pinned scenes */
