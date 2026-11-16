@@ -150,6 +150,41 @@
   v10.2 changes: The push is steady now. The vertical hold is done by CSS (fixed / sticky) instead of a scripted
                 transform, which was landing a frame behind the trackpad and made both panels bob. Script now moves
                 them sideways only. The shadow at the seam is gone.
+  v12.1 changes: Text selection is one solid teal, #0e5f55, lifted out of the green palette's own
+                rgb(24 62 60) and brightened until white text clears 7.5:1 on it. The earlier per-element
+                ramp is gone along with the spans it needed: a gradient inside a single highlight is not
+                possible at all, since ::selection takes background-color but ignores background-image,
+                and faking one page-wide would have meant ~30,000 extra elements.
+  v12.0 changes: Walk-through titles are sentence case instead of all caps, and smaller - the clamp runs
+                25-38px rather than 32-54px. They had been inheriting uppercase and .06em tracking from
+                the global h3 rule; they now opt out of both and sit very slightly tight at -.006em,
+                which suits mixed case. The scene number and the label above it lost tracking too,
+                .3em to .22em and .38em to .26em.
+  v11.9 changes: Supporting copy writes itself in. Each line is split into units - characters for the
+                eyebrow and the name, whole words for the paragraph so wrapping stays natural - and each
+                unit resolves out of a 12px blur, catching a brief glow as it lands. The headline also
+                lost its 0.35px text-stroke: the stroke mitred at the comma's tapered tail and cut a
+                visible notch out of it.
+  v11.8 changes: The hero now breathes between two palettes. It holds the warm wine-and-blue for about
+                ten seconds, cross-fades over four into the green, holds that for ten, and comes back —
+                a 24s round trip. Both palettes are live at once and each field keeps drifting through
+                the hand-over, so the colour arrives somewhere new rather than swapping in place. The
+                ground colour travels with them. Reduced-motion users get the warm palette, still.
+  v11.7 changes: Hero ground is now a dark green field rather than black with two coloured pools.
+                The field is lit evenly edge to edge, which is what makes a dark page read as
+                composed rather than empty; the vignette was eased from 66% to 42% to let that
+                light reach the corners.
+  v11.6 changes: The hero background moves now. The three colour fields were already animated, but each
+                ran one straight A-to-B drift on ease-in-out alternate, so it decelerated to a standstill
+                at both ends and sat there for most of a 26s cycle — which read as a still image. Each
+                now travels a closed loop at constant speed over 44-53s and breathes on a separate
+                17-23s period, so colour swells and fades out of phase with the movement. The periods
+                share no common factor, so the composite never visibly repeats. Reduced-motion users
+                still get a still background.
+  v11.5 changes: The hero no longer says the same thing twice — the eyebrow names sales, marketing and
+                growth operations, so the paragraph beneath it now opens on what is actually different
+                about running them together. Dead space at the top of the hero cut: the inner padding was
+                120px over 48px, which read as a heavy top margin; it is now 76px over 56px.
   v11.4 changes: DealBoard now says what actually went away: the copying between the spreadsheet and the
                 inbox. Added to the solution and as the first result, alongside nothing slipping through
                 and the day going to the work worth doing.
@@ -296,19 +331,59 @@
   .sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 
   /* ---------- Opening ---------- */
-  .hero { position: relative; min-height: 100vh; min-height: 100svh; overflow: hidden; background: #000000; color: #ffffff; }
+  .hero { position: relative; min-height: 100vh; min-height: 100svh; overflow: hidden; background: #07070b; color: #ffffff;
+    animation: heroGround 24s ease-in-out infinite; }
+  @keyframes heroGround { 0%, 33% { background-color: #07070b; } 50%, 83% { background-color: #091313; } 100% { background-color: #07070b; } }
   .aurora { position: absolute; inset: 0; overflow: hidden; }
-  .aurora i { position: absolute; width: 72vmax; height: 72vmax; border-radius: 50%; opacity: .85; will-change: transform; }
-  .aurora i:nth-child(1) { left: -22vmax; top: -30vmax; background: radial-gradient(circle, #7a1a33 0%, rgba(122,26,51,0) 68%); animation: drift1 26s ease-in-out infinite alternate; }
-  .aurora i:nth-child(2) { right: -26vmax; top: -6vmax; background: radial-gradient(circle, #2c1868 0%, rgba(44,24,104,0) 66%); animation: drift2 32s ease-in-out infinite alternate; }
-  .aurora i:nth-child(3) { left: 8vmax; bottom: -42vmax; background: radial-gradient(circle, #102f6b 0%, rgba(16,47,107,0) 66%); animation: drift3 29s ease-in-out infinite alternate; }
-  @keyframes drift1 { to { transform: translate(18vmax, 14vmax) scale(1.15); } }
-  @keyframes drift2 { to { transform: translate(-16vmax, 18vmax) scale(.9); } }
-  @keyframes drift3 { to { transform: translate(14vmax, -16vmax) scale(1.1); } }
-  .aurora::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 30%, rgba(0,0,0,.75) 100%); }
-  .h-inner { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: space-between; padding: 120px var(--gutter) 48px; max-width: 1600px; margin: 0 auto; will-change: transform, opacity; }
-  .h-eyebrow { display: flex; justify-content: space-between; opacity: 0; transform: translateY(10px); }
-  .loaded .h-eyebrow { transition: opacity .9s ease .2s, transform .9s var(--ease) .2s; opacity: 1; transform: none; }
+  /* Two full palettes live on top of each other.  Each <i> keeps its own drift and breathing;
+     the .pal wrapper above it cross-fades the whole set, so the page spends ~10s warm, fades over
+     4s, spends ~10s green, and fades back.  The fade is on a wrapper rather than on the fields
+     themselves because an element can only animate opacity once, and breathing already owns it. */
+  .aurora .pal { position: absolute; inset: 0; }
+  .aurora .pal-a { animation: palA 24s ease-in-out infinite; }
+  .aurora .pal-b { opacity: 0; animation: palB 24s ease-in-out infinite; }
+  @keyframes palA { 0%, 33% { opacity: 1; visibility: visible; } 50% { opacity: 0; visibility: visible; }
+                    50.01%, 82.99% { opacity: 0; visibility: hidden; }
+                    83% { opacity: 0; visibility: visible; } 100% { opacity: 1; visibility: visible; } }
+  @keyframes palB { 0% { opacity: 0; visibility: hidden; } 32.99% { opacity: 0; visibility: hidden; }
+                    33% { opacity: 0; visibility: visible; } 50%, 83% { opacity: 1; visibility: visible; }
+                    99.99% { opacity: 0; visibility: visible; } 100% { opacity: 0; visibility: hidden; } }
+
+  .aurora i { position: absolute; width: 64vmax; height: 64vmax; border-radius: 50%; will-change: transform, opacity; }
+  .pal i:nth-child(1) { left: -12vmax; top: -18vmax; }
+  .pal i:nth-child(2) { right: -12vmax; bottom: -18vmax; }
+
+  /* warm pair */
+  .pal-a i:nth-child(1) { background: radial-gradient(circle, rgba(122,26,51,.46) 0%, rgba(122,26,51,.40) 22%, rgba(122,26,51,.24) 42%, rgba(122,26,51,.08) 62%, rgba(122,26,51,0) 78%);
+    animation: drift1 27s linear infinite, breathe1 13s ease-in-out infinite; }
+  .pal-a i:nth-child(2) { background: radial-gradient(circle, rgba(16,47,107,.50) 0%, rgba(16,47,107,.43) 22%, rgba(16,47,107,.26) 42%, rgba(16,47,107,.09) 62%, rgba(16,47,107,0) 78%);
+    animation: drift2 32s linear infinite, breathe2 16s ease-in-out infinite; }
+
+  /* green pair — longer loops, so it never returns to the same place the warm pair just left */
+  .pal-b i:nth-child(1) { background: radial-gradient(circle, rgba(24,62,60,.52) 0%, rgba(24,62,60,.44) 22%, rgba(24,62,60,.26) 42%, rgba(24,62,60,.09) 62%, rgba(24,62,60,0) 78%);
+    animation: drift2 31s linear infinite, breathe2 14s ease-in-out infinite; }
+  .pal-b i:nth-child(2) { background: radial-gradient(circle, rgba(14,46,56,.54) 0%, rgba(14,46,56,.46) 22%, rgba(14,46,56,.27) 42%, rgba(14,46,56,.09) 62%, rgba(14,46,56,0) 78%);
+    animation: drift1 37s linear infinite, breathe1 17s ease-in-out infinite; }
+
+  @keyframes drift1 {
+    0%   { transform: translate(-10.3vmax, 28.2vmax) scale(1.00); }
+    25%  { transform: translate(6.6vmax, 2.4vmax) scale(1.07); }
+    50%  { transform: translate(10.3vmax, -28.2vmax) scale(1.00); }
+    75%  { transform: translate(-6.6vmax, -2.4vmax) scale(1.09); }
+    100% { transform: translate(-10.3vmax, 28.2vmax) scale(1.00); }
+  }
+  @keyframes drift2 {
+    0%   { transform: translate(9vmax, -24.4vmax) scale(1.00); }
+    25%  { transform: translate(5.6vmax, 2.1vmax) scale(1.08); }
+    50%  { transform: translate(-9vmax, 24.4vmax) scale(1.00); }
+    75%  { transform: translate(-5.6vmax, -2.1vmax) scale(1.06); }
+    100% { transform: translate(9vmax, -24.4vmax) scale(1.00); }
+  }
+  @keyframes breathe1 { 0%, 100% { opacity: .62; } 50% { opacity: .90; } }
+  @keyframes breathe2 { 0%, 100% { opacity: .90; } 50% { opacity: .60; } }
+  .aurora::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 40%, rgba(0,0,0,.42) 100%); }
+  .h-inner { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: space-between; padding: 76px var(--gutter) 56px; max-width: 1600px; margin: 0 auto; will-change: transform, opacity; }
+  .h-eyebrow { display: flex; justify-content: space-between; }
   .h-title { font-weight: 200; font-size: clamp(60px, 12.6vw, 230px); line-height: .9; text-transform: uppercase; margin: 6vh 0; }
   .h-title .mask { padding-bottom: .06em; }
   .h-title .mask > span { letter-spacing: .4em; filter: blur(14px); transition: transform 1.3s var(--ease), letter-spacing 1.5s var(--ease), filter 1.1s ease; }
@@ -317,13 +392,11 @@
   .loaded .h-title .mask > span { transform: none; letter-spacing: .015em; filter: blur(0); }
   .sheen { background: linear-gradient(100deg, #ffffff 0%, #ffffff 40%, #ffffff 46%, #e8b9c3 49%, #c9d3ff 52%, #ffffff 58%, #ffffff 100%);
     background-size: 280% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; color: transparent;
-    -webkit-text-stroke: .35px rgba(255,255,255,.55); animation: sheen 8s ease-in-out 2.6s infinite; }
+    animation: sheen 8s ease-in-out 2.6s infinite; }   /* no text-stroke: its miter cut a notch out of the comma's tail */
   @keyframes sheen { 0% { background-position: 100% 0; } 55%, 100% { background-position: -40% 0; } }
   .h-bottom { display: grid; grid-template-columns: minmax(0, 560px) auto; justify-content: space-between; align-items: end; gap: 40px; }
-  .h-desc p { font-size: 18px; line-height: 1.8; opacity: 0; transform: translateY(14px); }
-  .loaded .h-desc p { transition: opacity 1s ease .5s, transform 1s var(--ease) .5s; opacity: 1; transform: none; }
-  .h-id { display: flex; align-items: center; gap: 22px; opacity: 0; transform: translateY(14px); }
-  .loaded .h-id { transition: opacity 1s ease .68s, transform 1s var(--ease) .68s; opacity: 1; transform: none; }
+  .h-desc p { font-size: 18px; line-height: 1.8; }
+  .h-id { display: flex; align-items: center; gap: 22px; }
   .h-photo { width: 116px; height: 116px; border-radius: 50%; padding: 4px; border: 1px solid rgba(255,255,255,.35); flex: none; }
   .h-photo img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
   .h-id .nm { font-size: 20px; letter-spacing: .08em; text-transform: uppercase; }
@@ -395,11 +468,12 @@
   .s-shot.s-fade > .show { opacity: 1; z-index: 2; }
   .s-shot.s-fade > .prev { opacity: 1; z-index: 1; transition: none; }
   .s-cap { position: absolute; left: 8vw; top: 50%; transform: translateY(-50%); width: min(30vw, 420px); opacity: 0; color: #000000; }
-  .s-cap .count { font-size: 13px; letter-spacing: .3em; -webkit-text-stroke: .5px currentColor; color: #7ca002; margin-bottom: 26px; }
-  .s-cap h3 { font-size: clamp(32px, 3.4vw, 54px); line-height: 1.05; text-transform: uppercase; font-weight: 200; -webkit-text-stroke: .3px currentColor; }
+  .s-cap .count { font-size: 13px; letter-spacing: .22em; -webkit-text-stroke: .5px currentColor; color: #7ca002; margin-bottom: 26px; }
+  .s-cap h3 { font-size: clamp(25px, 2.5vw, 38px); line-height: 1.14; text-transform: none; letter-spacing: -.006em;
+    font-weight: 200; -webkit-text-stroke: .2px currentColor; }
   .s-cap p { margin-top: 22px; font-size: 19px; line-height: 1.75; color: #000000; }
   .s-cap .s-label { display: flex; align-items: center; gap: 16px; margin-top: 22px; padding: 0; background: none; border-radius: 0;
-    font-size: 12.5px; letter-spacing: .38em; text-transform: uppercase; color: #000000; -webkit-text-stroke: .6px currentColor; }
+    font-size: 12.5px; letter-spacing: .26em; text-transform: uppercase; color: #000000; -webkit-text-stroke: .6px currentColor; }
   .s-cap .s-label:empty { display: none; }
   .s-cap .swap { transition: opacity .5s ease, transform .6s var(--ease); }
   .s-cap .swap.out { opacity: 0; transform: translateY(14px); }
@@ -515,7 +589,7 @@
   .lb-prev, .lb-next { top: 50%; transform: translateY(-50%); } .lb-prev { left: 12px; } .lb-next { right: 12px; }
 
   @media (prefers-reduced-motion: reduce) {
-    .grain, .h-cue i { animation: none; }
+    .grain, .h-cue i, .aurora i, .aurora .pal, .hero { animation: none; }
     .ch { opacity: 1; filter: none; transform: none; animation: none !important; }
     .reveal, .reveal.from-left, .reveal.from-right { opacity: 1; transform: none; transition: none; }
     .wipe { clip-path: none !important; transition: none; }
@@ -637,7 +711,7 @@
   #hBase { display: inline-block; width: 0; height: 0; vertical-align: baseline; }
   .h-dot { position: absolute; z-index: 4; left: 0; top: 0; width: 0; height: 0; border-radius: 50%; background: #ffffff; transform: translate(-50%, -50%); opacity: 0; pointer-events: none; }
   .hero-pin .h-inner { transform-origin: 0 0; }
-  .hero.zooming .aurora i { animation-play-state: paused; }
+  .hero.zooming .aurora i, .hero.zooming .aurora .pal { animation-play-state: paused; }
   @media (prefers-reduced-motion: reduce) { .hero-pin { height: auto; margin-bottom: 0; } .hero-pin .hero { position: relative; } .h-dot { display: none; } }
   /* v8.2 — click the email to copy it */
   .closing .email::before { content: "Copied to clipboard"; position: absolute; left: 50%; top: calc(100% + 14px); transform: translate(-50%, -4px); white-space: nowrap; font-size: 11.5px; letter-spacing: .3em; text-transform: uppercase; -webkit-text-stroke: .5px currentColor; opacity: 0; transition: opacity .5s ease, transform .5s var(--ease); pointer-events: none; }
@@ -958,6 +1032,45 @@
   /* colour changes instantly for the frame the push panels release the page */
   body.theme-snap { transition: none !important; }
 </style>
+
+<style>
+  /* Every line is split into units - characters for the short lines, whole words for the
+     paragraph so wrapping stays natural. Each unit resolves out of blur and catches a brief
+     glow as it lands, staggered along the line, so the text writes itself in. */
+  .uw { display: inline-block; white-space: nowrap; }
+  .u  { display: inline-block; opacity: 0; filter: blur(12px); transform: translateY(16px) scale(1.24); }
+  .loaded .u { animation: resolve .92s var(--ease) both;
+    animation-delay: calc(var(--d, 0ms) + var(--i) * var(--step, 20ms)); }
+  @keyframes resolve {
+    0%   { opacity: 0; filter: blur(12px); transform: translateY(16px) scale(1.24); text-shadow: 0 0 0 rgba(255,255,255,0); }
+    52%  { opacity: 1; filter: blur(1.5px); transform: translateY(2px) scale(1.03); text-shadow: 0 0 16px rgba(255,255,255,.6); }
+    100% { opacity: 1; filter: blur(0); transform: none; text-shadow: 0 0 0 rgba(255,255,255,0); }
+  }
+  .h-eyebrow { --d: 60ms;   --step: 15ms; }
+  .h-desc p  { --d: 430ms;  --step: 25ms; }
+  .h-id .nm  { --d: 820ms;  --step: 17ms; }
+  .h-id .rl  { --d: 1040ms; --step: 30ms; }
+  .h-id .lg  { --d: 1200ms; --step: 26ms; }
+  .h-photo { opacity: 0; transform: scale(.82); }
+  .loaded .h-photo { transition: opacity .9s ease .8s, transform 1.1s var(--ease) .8s; opacity: 1; transform: none; }
+  .pstart .u, .pstart .h-photo { animation: none !important; transition: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    .u { opacity: 1; filter: none; transform: none; }
+    .loaded .u { animation: none; }
+    .h-photo, .loaded .h-photo { opacity: 1; transform: none; transition: none; }
+  }
+</style>
+
+<style>
+  /* One solid teal everywhere, lifted out of the green palette's rgb(24 62 60) to a brightness
+     that carries white text: 7.5:1 against white, so it reads on the light sections and the dark
+     ones alike.  ::selection ignores background-image, so a gradient here is not possible at all. */
+  ::selection { background-color: #0e5f55; color: #ffffff; text-shadow: none; }
+  ::-moz-selection { background-color: #0e5f55; color: #ffffff; text-shadow: none; }
+  /* the headline is a gradient clipped to its letters, so its fill has to be forced back on */
+  .sheen::selection { -webkit-text-fill-color: #ffffff; }
+  .sheen::-moz-selection { -webkit-text-fill-color: #ffffff; }
+</style>
 </head>
 <body class="pstart">
 <div class="grain" aria-hidden="true"></div>
@@ -977,14 +1090,14 @@
 <!-- ===== Opening ===== -->
 <div class="hero-pin" id="heroPin">
 <header class="hero" id="top" data-theme="aurora">
-  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="aurora" aria-hidden="true"><div class="pal pal-a"><i></i><i></i></div><div class="pal pal-b"><i></i><i></i></div></div>
   <canvas id="fx" aria-hidden="true"></canvas>
   <div class="h-inner" id="hInner">
-    <div class="h-eyebrow eyebrow"><span class="disc">Sales <i>·</i> Marketing <i>·</i> Growth Operations</span><span>Portfolio 2026</span></div>
+    <div class="h-eyebrow eyebrow"><span class="disc">Sales <i>·</i> Marketing <i>·</i> GTM <i>·</i> Growth Operations</span><span>Portfolio 2026</span></div>
     <h1 class="h-title" id="hTitle"><span class="mask"><span class="sheen">Growth,</span></span><span class="mask l2"><span class="sheen">Engineered<span id="hStop">.</span><i id="hBase" aria-hidden="true"></i></span></span></h1>
     <div class="h-bottom">
       <div class="h-desc">
-        <p>Sales, marketing and growth operations, run as one connected discipline. 10+ years client-facing, from the first conversation to the closed deal and the systems that keep it growing, consistently improving conversion rates, deal value and operational efficiency across US and global markets.</p>
+        <p>Run as one connected discipline, not as separate teams. 10+ years client-facing, from the first conversation to the closed deal and the go-to-market systems that keep it growing, consistently improving conversion rates, deal value and operational efficiency across US and global markets.</p>
       </div>
       <div class="h-id">
         <div class="h-photo"><img src="assets/img/img-d853636ef51f.webp" alt="Mouhssine Zerrak"></div>
@@ -997,7 +1110,49 @@
 </header>
 </div>
 
-
+<script id="heroReveal">
+(function () {
+  function split(el, mode) {
+    if (!el || el.dataset.split) return 0;
+    var n = 0;
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType === 3) {
+          if (!child.textContent.trim()) return;
+          var frag = document.createDocumentFragment();
+          child.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (!part.trim()) { frag.appendChild(document.createTextNode(part)); return; }
+            var w = document.createElement('span');
+            w.className = 'uw';
+            if (mode === 'char') {
+              part.split('').forEach(function (ch) {
+                var s = document.createElement('span');
+                s.className = 'u'; s.style.setProperty('--i', n++); s.textContent = ch;
+                w.appendChild(s);
+              });
+            } else {
+              w.className = 'uw u'; w.style.setProperty('--i', n++); w.textContent = part;
+            }
+            frag.appendChild(w);
+          });
+          node.replaceChild(frag, child);
+        } else if (child.nodeType === 1 && !child.classList.contains('u')) {
+          walk(child);
+        }
+      });
+    })(el);
+    el.dataset.split = '1';
+    return n;
+  }
+  try {
+    split(document.querySelector('.h-eyebrow'), 'char');
+    split(document.querySelector('.h-desc p'), 'word');
+    split(document.querySelector('.h-id .nm'), 'char');
+    document.querySelectorAll('.h-id .rl, .h-id .lg').forEach(function (el) { split(el, 'word'); });
+  } catch (e) { /* if this fails the text simply shows, unanimated */ }
+})();
+</script>
 <section class="numbers" id="numbers" data-theme="paper">
   <div class="wrap">
     <div class="numbers-grid">
